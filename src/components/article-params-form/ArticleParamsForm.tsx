@@ -29,13 +29,16 @@ export const ArticleParamsForm = ({
   const [asideIsOpen, setAsideIsOpen] = useState(false);
   const [draft, setDraft] = useState<TArticleState>(articleParams);
 
-  const asideRef = useRef<HTMLElement>(null);
+  const widgetRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent): void => {
-      const target = event.target as Element;
+    if (!asideIsOpen) {
+      return;
+    }
 
-      if (asideIsOpen && asideRef.current && !asideRef.current.contains(target)) {
+    const handleClickOutside = (event: MouseEvent): void => {
+      const target = event.target as Node;
+      if (widgetRef.current && !widgetRef.current.contains(target)) {
         setAsideIsOpen(false);
       }
     };
@@ -67,11 +70,10 @@ export const ArticleParamsForm = ({
     };
 
   return (
-    <>
+    <div ref={widgetRef}>
       <ArrowButton isOpen={asideIsOpen} onClick={() => setAsideIsOpen((p) => !p)} />
 
       <aside
-        ref={asideRef}
         className={clsx(styles.container, { [styles.container_open]: asideIsOpen })}
       >
         <form className={styles.form} onSubmit={handleSubmit} onReset={handleReset}>
@@ -114,6 +116,6 @@ export const ArticleParamsForm = ({
           </div>
         </form>
       </aside>
-    </>
+    </div>
   );
 };
