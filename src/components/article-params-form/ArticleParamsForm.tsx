@@ -5,18 +5,17 @@ import {
   backgroundColors,
   contentWidthArr,
   defaultArticleState,
+  type ArticleStateType as TArticleState,
 } from '@/constants/articleProps';
 import { RadioGroup } from '@/ui/radio-group';
 import { Select } from '@/ui/select';
 import { Separator } from '@/ui/separator';
 import { clsx } from 'clsx';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 
 import styles from './ArticleParamsForm.module.scss';
-
-type TArticleState = typeof defaultArticleState;
 
 type TArticleParamsFormProps = {
   articleParams: TArticleState;
@@ -27,68 +26,87 @@ export const ArticleParamsForm = ({
   articleParams,
   onApply,
 }: TArticleParamsFormProps): React.JSX.Element => {
-  const [isOpen, setIsOpen] = useState(false);
-
+  const [asideIsOpen, setAsideIsOpen] = useState(false);
   const [draft, setDraft] = useState<TArticleState>(articleParams);
+
+  const asideRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      const target = event.target as Element;
+
+      if (asideIsOpen && asideRef.current && !asideRef.current.contains(target)) {
+        setAsideIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return (): void => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [asideIsOpen]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     onApply(draft);
-    setIsOpen(false);
+    setAsideIsOpen(false);
   };
 
-  const handleReset = (): void => {
+  const handleReset = (e: React.FormEvent<HTMLFormElement>): void => {
     setDraft(defaultArticleState);
+    onApply(defaultArticleState);
+    setAsideIsOpen(false);
+    e.preventDefault();
   };
+
+  const handleFieldChange =
+    <K extends keyof TArticleState>(field: K): ((option: TArticleState[K]) => void) =>
+    (option: TArticleState[K]): void => {
+      setDraft((prev): TArticleState => ({ ...prev, [field]: option }));
+    };
 
   return (
     <>
-      <ArrowButton isOpen={isOpen} onClick={() => setIsOpen((p) => !p)} />
+      <ArrowButton isOpen={asideIsOpen} onClick={() => setAsideIsOpen((p) => !p)} />
 
-      <aside className={clsx(styles.container, { [styles.container_open]: isOpen })}>
+      <aside
+        ref={asideRef}
+        className={clsx(styles.container, { [styles.container_open]: asideIsOpen })}
+      >
         <form className={styles.form} onSubmit={handleSubmit} onReset={handleReset}>
           <p>Задайте параметры</p>
           <Select
             title="Шрифт"
             options={fontFamilyOptions}
             selected={draft.fontFamilyOption}
-            onChange={(option): void =>
-              setDraft((prev): TArticleState => ({ ...prev, fontFamilyOption: option }))
-            }
+            onChange={handleFieldChange('fontFamilyOption')}
           />
           <RadioGroup
             title="Размер шрифта"
             options={fontSizeOptions}
             selected={draft.fontSizeOption}
             name="font"
-            onChange={(option): void =>
-              setDraft((prev): TArticleState => ({ ...prev, fontSizeOption: option }))
-            }
+            onChange={handleFieldChange('fontSizeOption')}
           />
           <Select
             title="Цвет шрифта"
             options={fontColors}
             selected={draft.fontColor}
-            onChange={(option): void =>
-              setDraft((prev): TArticleState => ({ ...prev, fontColor: option }))
-            }
+            onChange={handleFieldChange('fontColor')}
           />
           <Separator />
           <Select
             title="Цвет фона"
             options={backgroundColors}
             selected={draft.backgroundColor}
-            onChange={(option): void =>
-              setDraft((prev): TArticleState => ({ ...prev, backgroundColor: option }))
-            }
+            onChange={handleFieldChange('backgroundColor')}
           />
           <Select
             title="Ширина контента"
             options={contentWidthArr}
             selected={draft.contentWidth}
-            onChange={(option): void =>
-              setDraft((prev): TArticleState => ({ ...prev, contentWidth: option }))
-            }
+            onChange={handleFieldChange('contentWidth')}
           />
           <div className={styles.bottomContainer}>
             <Button title="Сбросить" htmlType="reset" type="clear" />

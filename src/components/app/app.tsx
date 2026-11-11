@@ -1,4 +1,7 @@
-import { defaultArticleState } from '@/constants/articleProps.ts';
+import {
+  defaultArticleState,
+  type ArticleStateType as TArticleState,
+} from '@/constants/articleProps.ts';
 import { clsx } from 'clsx';
 import { useState, type CSSProperties } from 'react';
 
@@ -7,8 +10,6 @@ import { ArticleParamsForm } from '@components/article-params-form';
 import { Article } from '../article/Article';
 
 import styles from './app.module.scss';
-
-export type TArticleState = typeof defaultArticleState;
 
 export const App = (): React.JSX.Element => {
   const [articleParams, setArticleParams] = useState<TArticleState>(defaultArticleState);
